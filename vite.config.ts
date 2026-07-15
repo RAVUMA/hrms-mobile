@@ -12,5 +12,6 @@ export default defineConfig({
     port: 5372,
     host: true,
     strictPort: true,
+    allowedHosts: ['mobile.hjholdings.lk'],
   },
 })
