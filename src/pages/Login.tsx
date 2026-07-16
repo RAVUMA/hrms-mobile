@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react';
+import { motion } from 'motion/react';
+import { Eye, EyeOff } from 'lucide-react';
 import { apiPost, saveSession, ApiError, UnauthorizedError } from '../api/apiClient';
 
 export default function Login() {
@@ -41,20 +43,27 @@ export default function Login() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-7">
-      <div className="w-full max-w-xs">
+    <div className="flex flex-1 flex-col items-center justify-center bg-white px-7">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-xs"
+      >
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E3A3A] text-3xl text-[#E8C99B]">
-            H
-          </div>
-          <h1 className="text-center text-xl font-bold text-[#1E3A3A]">
+          <img
+            src="/logo.jpg"
+            alt="HJ Holdings"
+            className="h-16 w-16 rounded-2xl object-cover shadow-lg"
+          />
+          <h1 className="text-center text-xl font-bold text-brand-teal">
             HJ Holdings HRMS
           </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm text-gray-600" htmlFor="username">
+            <label className="mb-1 block text-sm font-medium text-gray-600" htmlFor="username">
               Username
             </label>
             <input
@@ -63,12 +72,12 @@ export default function Login() {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base outline-none focus:border-[#1E3A3A]"
+              className="w-full rounded-xl border border-gray-200 bg-brand-surface px-3 py-2.5 text-base outline-none transition-colors focus:border-brand-teal"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm text-gray-600" htmlFor="password">
+            <label className="mb-1 block text-sm font-medium text-gray-600" htmlFor="password">
               Password
             </label>
             <div className="relative">
@@ -78,30 +87,39 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-base outline-none focus:border-[#1E3A3A]"
+                className="w-full rounded-xl border border-gray-200 bg-brand-surface px-3 py-2.5 pr-10 text-base outline-none transition-colors focus:border-brand-teal"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
                 aria-label="Toggle password visibility"
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
               >
-                {showPassword ? '🙈' : '👁'}
+                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
               </button>
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-sm text-red-600"
+            >
+              {error}
+            </motion.p>
+          )}
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading}
-            className="mt-2 rounded-lg bg-[#E5502F] py-3 font-semibold text-white disabled:opacity-60"
+            className="mt-2 rounded-xl bg-brand-teal py-3 font-semibold text-white shadow-[var(--shadow-card)] disabled:opacity-60"
           >
             {isLoading ? 'Signing in...' : 'Sign In'}
-          </button>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

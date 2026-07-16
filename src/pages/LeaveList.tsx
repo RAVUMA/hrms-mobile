@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { Plus, MoreVertical } from 'lucide-react';
 import TopBar from '../components/TopBar';
+import Dialog from '../components/Dialog';
+import { Skeleton, SkeletonList } from '../components/Skeleton';
 import { apiGet, apiPut, apiDelete } from '../api/apiClient';
 import {
   availableLeaveFromJson,
@@ -12,13 +16,13 @@ import {
 function statusColor(status: string): string {
   switch (status) {
     case 'approved':
-      return '#16a34a';
+      return '#1e3a3a';
     case 'rejected':
       return '#dc2626';
     case 'cancelled':
       return '#6b7280';
     default:
-      return '#f97316';
+      return '#c9a06a';
   }
 }
 
@@ -38,6 +42,10 @@ export default function LeaveList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpenFor, setMenuOpenFor] = useState<number | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    { type: 'withdraw' | 'cancel'; request: LeaveRequest } | null
+  >(null);
+  const [infoDialog, setInfoDialog] = useState<string | null>(null);
 
   async function load() {
     setIsLoading(true);
@@ -70,86 +78,97 @@ export default function LeaveList() {
 
   function openApply() {
     if (balances.length === 0) {
-      alert('No leave types are available to you.');
+      setInfoDialog('No leave types are available to you.');
       return;
     }
     navigate('/leaves/apply', { state: { leaveTypes: balances.map((b) => b.leaveType) } });
   }
 
-  async function withdraw(request: LeaveRequest) {
-    setMenuOpenFor(null);
-    if (!confirm('Withdraw this pending leave request?')) return;
+  async function performConfirmedAction() {
+    if (!confirmAction) return;
+    const { type, request } = confirmAction;
+    setConfirmAction(null);
     try {
-      await apiDelete(`/leave/user-request/${request.id}/`);
+      if (type === 'withdraw') {
+        await apiDelete(`/leave/user-request/${request.id}/`);
+      } else {
+        await apiPut(`/leave/cancel/${request.id}/`);
+      }
       load();
     } catch {
-      alert('Could not withdraw the request.');
-    }
-  }
-
-  async function cancelApproved(request: LeaveRequest) {
-    setMenuOpenFor(null);
-    if (!confirm('Cancel this approved leave?')) return;
-    try {
-      await apiPut(`/leave/cancel/${request.id}/`);
-      load();
-    } catch {
-      alert('Could not cancel this leave.');
+      setInfoDialog(
+        type === 'withdraw' ? 'Could not withdraw the request.' : 'Could not cancel this leave.',
+      );
     }
   }
 
   return (
-    <div className="relative flex min-h-full flex-col">
+    <div className="relative flex min-h-full flex-col bg-white">
       <TopBar title="Leaves" showBack />
 
-      <div className="flex-1 pb-24">
+      <div className="flex-1 pb-40">
         {isLoading ? (
-          <p className="p-6 text-center text-gray-500">Loading...</p>
+          <div className="flex flex-col gap-4 px-4 pt-4">
+            <div className="flex gap-3">
+              <Skeleton className="h-24 w-32 shrink-0 rounded-2xl" />
+              <Skeleton className="h-24 w-32 shrink-0 rounded-2xl" />
+            </div>
+            <SkeletonList count={3} />
+          </div>
         ) : error ? (
           <p className="p-6 text-center text-gray-500">{error}</p>
         ) : (
           <>
             {balances.length > 0 && (
               <>
-                <h2 className="px-4 pt-4 pb-2 text-base font-bold text-gray-900">
+                <h2 className="px-4 pt-4 pb-2 text-base font-bold text-brand-teal">
                   Leave Balance
                 </h2>
                 <div className="flex gap-3 overflow-x-auto px-4 pb-2">
-                  {balances.map((b) => (
-                    <div
+                  {balances.map((b, i) => (
+                    <motion.div
                       key={b.id}
-                      className="w-32 shrink-0 rounded-lg bg-gray-100 p-3"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05, duration: 0.25 }}
+                      className="w-32 shrink-0 rounded-2xl bg-brand-teal p-3 shadow-[var(--shadow-card)]"
                     >
-                      <p className="truncate text-xs text-gray-500">
+                      <p className="truncate text-xs text-brand-cream/70">
                         {b.leaveType?.name ?? 'Leave'}
                       </p>
-                      <p className="mt-1 text-xl font-bold text-gray-900">
+                      <p className="mt-1 text-xl font-bold text-brand-gold">
                         {b.totalLeaveDays.toFixed(1)}
                       </p>
-                      <p className="text-[11px] text-gray-500">days left</p>
-                    </div>
+                      <p className="text-[11px] text-brand-cream/70">days left</p>
+                    </motion.div>
                   ))}
                 </div>
               </>
             )}
 
-            <h2 className="px-4 pt-4 pb-2 text-base font-bold text-gray-900">
+            <h2 className="px-4 pt-4 pb-2 text-base font-bold text-brand-teal">
               My Requests
             </h2>
             {requests.length === 0 ? (
               <p className="p-6 text-center text-gray-500">No leave requests yet.</p>
             ) : (
-              <ul className="divide-y divide-gray-100">
-                {requests.map((r) => {
+              <ul className="flex flex-col gap-2 px-4">
+                {requests.map((r, i) => {
                   const dateRange =
                     r.endDate && r.endDate !== r.startDate
                       ? `${r.startDate} → ${r.endDate}`
                       : r.startDate;
                   const canManage = r.status === 'requested' || canCancelApproved(r);
                   return (
-                    <li key={r.id} className="flex items-center justify-between px-4 py-3">
+                    <motion.li
+                      key={r.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: Math.min(i * 0.04, 0.3), duration: 0.2 }}
+                      className="flex items-center justify-between rounded-2xl bg-brand-surface p-3.5"
+                    >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-semibold text-brand-teal">
                           {r.leaveType?.name ?? 'Leave'}
                         </p>
                         <p className="truncate text-xs text-gray-500">
@@ -159,7 +178,7 @@ export default function LeaveList() {
                       </div>
                       <div className="relative flex shrink-0 items-center gap-1">
                         <span
-                          className="rounded px-2 py-1 text-[11px] font-semibold"
+                          className="rounded-full px-2 py-1 text-[11px] font-semibold"
                           style={{
                             backgroundColor: `${statusColor(r.status)}26`,
                             color: statusColor(r.status),
@@ -169,45 +188,60 @@ export default function LeaveList() {
                         </span>
                         {canManage && (
                           <>
-                            <button
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
                               onClick={() =>
                                 setMenuOpenFor(menuOpenFor === r.id ? null : r.id)
                               }
-                              className="px-1 text-gray-500"
+                              className="p-1 text-gray-500"
                               aria-label="Actions"
                             >
-                              ⋮
-                            </button>
-                            {menuOpenFor === r.id && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-10"
-                                  onClick={() => setMenuOpenFor(null)}
-                                />
-                                <div className="absolute right-0 top-7 z-20 w-40 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-                                  {r.status === 'requested' && (
-                                    <button
-                                      onClick={() => withdraw(r)}
-                                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                                    >
-                                      Withdraw
-                                    </button>
-                                  )}
-                                  {canCancelApproved(r) && (
-                                    <button
-                                      onClick={() => cancelApproved(r)}
-                                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                                    >
-                                      Cancel leave
-                                    </button>
-                                  )}
-                                </div>
-                              </>
-                            )}
+                              <MoreVertical size={16} />
+                            </motion.button>
+                            <AnimatePresence>
+                              {menuOpenFor === r.id && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setMenuOpenFor(null)}
+                                  />
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute right-0 top-7 z-20 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
+                                  >
+                                    {r.status === 'requested' && (
+                                      <button
+                                        onClick={() => {
+                                          setMenuOpenFor(null);
+                                          setConfirmAction({ type: 'withdraw', request: r });
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                                      >
+                                        Withdraw
+                                      </button>
+                                    )}
+                                    {canCancelApproved(r) && (
+                                      <button
+                                        onClick={() => {
+                                          setMenuOpenFor(null);
+                                          setConfirmAction({ type: 'cancel', request: r });
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                                      >
+                                        Cancel leave
+                                      </button>
+                                    )}
+                                  </motion.div>
+                                </>
+                              )}
+                            </AnimatePresence>
                           </>
                         )}
                       </div>
-                    </li>
+                    </motion.li>
                   );
                 })}
               </ul>
@@ -216,16 +250,40 @@ export default function LeaveList() {
         )}
       </div>
 
-      <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-10 flex justify-center">
+      <div className="pointer-events-none fixed bottom-24 left-0 right-0 z-10 flex justify-center">
         <div className="flex w-full justify-center" style={{ maxWidth: 480 }}>
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={openApply}
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-[#E5502F] px-5 py-3 font-semibold text-white shadow-lg"
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-brand-teal px-5 py-3 font-semibold text-brand-gold shadow-[var(--shadow-raised)]"
           >
-            + Apply
-          </button>
+            <Plus size={18} strokeWidth={2.5} /> Apply
+          </motion.button>
         </div>
       </div>
+
+      <Dialog
+        open={confirmAction !== null}
+        title={confirmAction?.type === 'withdraw' ? 'Withdraw request?' : 'Cancel leave?'}
+        message={
+          confirmAction?.type === 'withdraw'
+            ? 'This pending leave request will be withdrawn.'
+            : 'This approved leave will be cancelled.'
+        }
+        confirmLabel={confirmAction?.type === 'withdraw' ? 'Withdraw' : 'Cancel Leave'}
+        cancelLabel="Back"
+        danger
+        onConfirm={performConfirmedAction}
+        onCancel={() => setConfirmAction(null)}
+      />
+
+      <Dialog
+        open={infoDialog !== null}
+        title="Leaves"
+        message={infoDialog ?? ''}
+        confirmLabel="OK"
+        onConfirm={() => setInfoDialog(null)}
+      />
     </div>
   );
 }

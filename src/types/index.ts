@@ -179,3 +179,28 @@ export function leaveRequestFromJson(json: Record<string, unknown>): LeaveReques
     rejectReason: json.reject_reason as string | undefined,
   };
 }
+
+export interface AnnouncementContentBlock {
+  type: 'heading' | 'paragraph';
+  text: string;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: AnnouncementContentBlock[];
+  createdAt?: string;
+  expireDate?: string;
+  hasViewed: boolean;
+}
+
+export function announcementFromJson(json: Record<string, unknown>): Announcement {
+  return {
+    id: Number(json.id) || 0,
+    title: String(json.title ?? 'Announcement'),
+    content: Array.isArray(json.content) ? (json.content as AnnouncementContentBlock[]) : [],
+    createdAt: json.created_at as string | undefined,
+    expireDate: json.expire_date as string | undefined,
+    hasViewed: json.has_viewed === true,
+  };
+}
