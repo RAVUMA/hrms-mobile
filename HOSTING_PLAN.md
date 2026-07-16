@@ -9,11 +9,17 @@ It talks to the existing Horilla backend at `https://hrms.hjholdings.lk/api`
 over the network — this app doesn't need its own database or backend, just
 a place to serve static files over HTTPS.
 
+**Status: hosted and live at `https://mobile.hjholdings.lk`.** One
+outstanding blocker remains — see Step 5. Login currently fails because the
+backend hasn't allowed this origin yet (confirmed via direct testing: the
+backend's response still has no `Access-Control-Allow-Origin` header for
+requests from `https://mobile.hjholdings.lk`).
+
 ---
 
 ## Requirements before you start
 
-1. **A domain or subdomain** pointed at the VPS (e.g. `app.hjholdings.lk`).
+1. **A domain or subdomain** pointed at the VPS (e.g. `mobile.hjholdings.lk`).
    Get an A record added in DNS pointing to the VPS's IP address.
 2. **HTTPS is mandatory, not optional.** The app uses the browser's
    Geolocation API (for the Clock In/Out feature, matching an office
@@ -61,7 +67,7 @@ below, refreshing the page on e.g. `/leaves` will 404.
 ```nginx
 server {
     listen 80;
-    server_name app.hjholdings.lk;
+    server_name mobile.hjholdings.lk;
 
     root /var/www/hj-mobile;
     index index.html;
@@ -82,11 +88,11 @@ server {
 
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d app.hjholdings.lk
+sudo certbot --nginx -d mobile.hjholdings.lk
 ```
 
 Certbot edits the Nginx config in place to add the SSL certificate and a
-redirect from port 80 → 443. Confirm afterward that `https://app.hjholdings.lk`
+redirect from port 80 → 443. Confirm afterward that `https://mobile.hjholdings.lk`
 loads and that plain `http://` redirects to it.
 
 ## Step 5 — Backend CORS update (separate repo/server)
@@ -96,7 +102,7 @@ different one) needs to allow this app's real domain to call its API. In
 that project's production `.env`, add/update:
 
 ```
-CORS_ALLOWED_ORIGINS=https://app.hjholdings.lk
+CORS_ALLOWED_ORIGINS=https://mobile.hjholdings.lk
 ```
 
 (comma-separate additional origins if there are more, e.g. keeping
@@ -109,7 +115,7 @@ regardless of how correctly this app itself is hosted.
 
 ## Step 6 — Verify
 
-1. Visit `https://app.hjholdings.lk` — should load the login screen.
+1. Visit `https://mobile.hjholdings.lk` — should load the login screen.
 2. Try logging in with a real account — confirms CORS is correctly
    configured on the backend (Step 5).
 3. Navigate to a sub-page (e.g. Modules → Employees) and refresh the

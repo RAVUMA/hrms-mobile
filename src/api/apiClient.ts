@@ -1,5 +1,9 @@
-export const BASE_URL = 'https://hrms.hjholdings.lk/api';
-export const SITE_BASE_URL = 'https://hrms.hjholdings.lk';
+// Overridable per-environment via .env.local (VITE_SITE_BASE_URL) so local
+// dev can point at a local Django backend instead of always hitting
+// production - see .env.local.example.
+export const SITE_BASE_URL =
+  import.meta.env.VITE_SITE_BASE_URL ?? 'https://hrms.hjholdings.lk';
+export const BASE_URL = `${SITE_BASE_URL}/api`;
 
 const TOKEN_KEY = 'hj_access_token';
 const EMPLOYEE_KEY = 'hj_employee';

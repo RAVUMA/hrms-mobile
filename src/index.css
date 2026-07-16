@@ -1,4 +1,26 @@
 @import "tailwindcss";
+@import "@fontsource/plus-jakarta-sans/400.css";
+@import "@fontsource/plus-jakarta-sans/500.css";
+@import "@fontsource/plus-jakarta-sans/600.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
+@import "@fontsource/plus-jakarta-sans/800.css";
+
+/* HJ Holdings brand palette, pulled from the logo (public/logo.jpg):
+   deep teal + warm gold. Used via Tailwind utility classes, e.g.
+   bg-brand-teal, text-brand-gold, border-brand-teal/20 etc. */
+@theme {
+  --color-brand-teal: #1e3a3a;
+  --color-brand-teal-dark: #142828;
+  --color-brand-teal-light: #2c4e4e;
+  --color-brand-gold: #e8c99b;
+  --color-brand-gold-dark: #c9a06a;
+  --color-brand-cream: #f4efe6;
+  --color-brand-surface: #eef3f2;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --shadow-soft: 0 2px 10px rgba(30, 58, 58, 0.06);
+  --shadow-card: 0 8px 24px rgba(30, 58, 58, 0.08);
+  --shadow-raised: 0 10px 20px rgba(232, 201, 155, 0.35);
+}
 
 html,
 body,
@@ -8,9 +30,11 @@ body,
 }
 
 body {
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: contain;
+  letter-spacing: -0.01em;
 }
 
 /* Constrain to a mobile-width column even if opened on a wider screen -
@@ -22,5 +46,27 @@ body {
   display: flex;
   flex-direction: column;
   background: #fff;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 32px rgba(30, 58, 58, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Smooth, momentum-based scrolling everywhere - feels native on mobile. */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Subtle shimmer for skeleton loading states. */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, #eef3f2 25%, #e4ebe9 37%, #eef3f2 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
 }
