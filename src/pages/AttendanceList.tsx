@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { MapPin } from 'lucide-react';
 import TopBar from '../components/TopBar';
 import { SkeletonList } from '../components/Skeleton';
 import { apiGet } from '../api/apiClient';
@@ -21,6 +22,31 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div className="flex gap-4 py-1.5 text-sm">
       <span className="w-36 shrink-0 text-gray-500">{label}</span>
       <span className="text-gray-900">{value}</span>
+    </div>
+  );
+}
+
+function LocationRow({
+  label,
+  latitude,
+  longitude,
+}: {
+  label: string;
+  latitude?: number;
+  longitude?: number;
+}) {
+  if (latitude == null || longitude == null) return null;
+  return (
+    <div className="flex gap-4 py-1.5 text-sm">
+      <span className="w-36 shrink-0 text-gray-500">{label}</span>
+      <a
+        href={`https://www.google.com/maps?q=${latitude},${longitude}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 text-brand-teal underline underline-offset-2"
+      >
+        <MapPin size={13} /> View on map
+      </a>
     </div>
   );
 }
@@ -134,6 +160,11 @@ export default function AttendanceList() {
                 label="Check-in"
                 value={`${selected.clockIn ?? '--'} (${selected.clockInDate ?? '--'})`}
               />
+              <LocationRow
+                label="Check-in location"
+                latitude={selected.clockInLatitude}
+                longitude={selected.clockInLongitude}
+              />
               <DetailRow
                 label="Check-out"
                 value={
@@ -141,6 +172,11 @@ export default function AttendanceList() {
                     ? `${selected.clockOut} (${selected.clockOutDate ?? '--'})`
                     : 'Not clocked out yet'
                 }
+              />
+              <LocationRow
+                label="Check-out location"
+                latitude={selected.clockOutLatitude}
+                longitude={selected.clockOutLongitude}
               />
               <DetailRow label="Worked hours" value={selected.workedHour ?? '--'} />
               <DetailRow label="Minimum hours (shift)" value={selected.minimumHour ?? '--'} />

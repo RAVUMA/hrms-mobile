@@ -115,12 +115,16 @@ export default function AttendanceClockTab() {
     setMessage(null);
     try {
       let body: Record<string, unknown> | undefined;
-      if (isGeoFencingEnabled()) {
+      try {
         const position = await getCurrentPosition();
         body = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
+      } catch (locationError) {
+        // Location is required when geofencing enforcement is on; otherwise
+        // it's best-effort logging only, so clock-in/out can proceed without it.
+        if (isGeoFencingEnabled()) throw locationError;
       }
 
       const [statusCode, response] = await apiPostRaw(`/attendance/${action}/`, body);
