@@ -91,6 +91,10 @@ export interface AttendanceRecord {
   isValidateRequest: boolean;
   isHoliday: boolean;
   requestDescription?: string;
+  clockInLatitude?: number;
+  clockInLongitude?: number;
+  clockOutLatitude?: number;
+  clockOutLongitude?: number;
 }
 
 export function attendanceRecordFromJson(json: Record<string, unknown>): AttendanceRecord {
@@ -109,6 +113,13 @@ export function attendanceRecordFromJson(json: Record<string, unknown>): Attenda
     isValidateRequest: json.is_validate_request === true,
     isHoliday: json.is_holiday === true,
     requestDescription: json.request_description as string | undefined,
+    clockInLatitude: json.clock_in_latitude != null ? Number(json.clock_in_latitude) : undefined,
+    clockInLongitude:
+      json.clock_in_longitude != null ? Number(json.clock_in_longitude) : undefined,
+    clockOutLatitude:
+      json.clock_out_latitude != null ? Number(json.clock_out_latitude) : undefined,
+    clockOutLongitude:
+      json.clock_out_longitude != null ? Number(json.clock_out_longitude) : undefined,
   };
 }
 
